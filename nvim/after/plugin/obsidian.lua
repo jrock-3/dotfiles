@@ -14,10 +14,6 @@ require("obsidian").setup {
     },
   },
 
-  -- Alternatively - and for backwards compatibility - you can set 'dir' to a single path instead of
-  -- 'workspaces'. For example:
-  -- dir = "~/vaults/work",
-
   -- Optional, set to true to use the current directory as a vault; otherwise
   -- the first workspace is opened by default.
   detect_cwd = false,
@@ -253,3 +249,4 @@ vim.keymap.set("n", "gf", function()
     return "gf"
   end
 end, { noremap = false, expr = true })
+
