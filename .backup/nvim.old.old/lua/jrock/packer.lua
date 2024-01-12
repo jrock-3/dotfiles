@@ -56,16 +56,6 @@ return require('packer').startup(function(use)
       requires = {
         "nvim-lua/plenary.nvim",
       },
-      config = function()
-        require("obsidian").setup({
-          workspaces = {
-            {
-              name = "personal",
-              path = "~/obsidian/Obsidian-Master-Vault",
-            },
-          },
-        })
-      end,
     })
 
 end)
