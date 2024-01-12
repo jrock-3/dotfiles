@@ -4,5 +4,10 @@
 -- See the kickstart.nvim README for more information
 return {
   'mbbill/undotree',
-  'alexghergh/nvim-tmux-navigation',
+  {
+    'prichrd/netrw.nvim',
+    config = function()
+      require('netrw').setup()
+    end
+  },
 }
