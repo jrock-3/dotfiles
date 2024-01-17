@@ -10,4 +10,5 @@ return {
       require('netrw').setup()
     end
   },
+  'ThePrimeagen/vim-be-good',
 }

@@ -34,11 +34,11 @@ vim.keymap.set('n', 'n', 'nzzzv')
 vim.keymap.set('n', 'N', 'Nzzzv')
 
 -- Move when highlighting line
-vim.keymap.set('v', 'J', [[:m '>+1<CR>gv=gv]])
-vim.keymap.set('v', 'K', [[:m '<-2<CR>gv=gv]])
+vim.keymap.set('v', 'J', [[:m '>+1<CR>gv=gv]], { desc = 'Shift line down' })
+vim.keymap.set('v', 'K', [[:m '<-2<CR>gv=gv]], { desc = 'Shift line up' })
 
 vim.keymap.set('n', '<leader>st', vim.cmd.Ex, { desc = '[S]earch File [T]ree (netrw)' })
 
-vim.keymap.set("n", "<leader>u", vim.cmd.UndotreeToggle)
+vim.keymap.set("n", "<leader>u", vim.cmd.UndotreeToggle, { desc = '[U]ndotree Toggle' })
 
 -- vim: ts=2 sts=2 sw=2 et
