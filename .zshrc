@@ -12,10 +12,11 @@ plugins=(git zsh-syntax-highlighting zsh-autosuggestions)
 source $ZSH/oh-my-zsh.sh
 
 ### ADD STANDARD ZSHRC CONFIGURATION HERE
-alias vi="nvim"
-alias vim="nvim"
-alias ll="ls -lAF"
-alias lc="colorls -lA --sd"
+export EDITOR=nvim
+export VISUAL="$EDITOR"
+
+alias nv="nvim"
+alias ll="eza -laF --icons"
 
 bindkey '  ' autosuggest-execute
 ### ---
@@ -23,3 +24,7 @@ bindkey '  ' autosuggest-execute
 source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
