@@ -1,0 +1,16 @@
+# Path to your oh-my-zsh installation.
+plugins=(git zsh-syntax-highlighting zsh-autosuggestions)
+
+### ADD STANDARD ZSHRC CONFIGURATION HERE
+export EDITOR=nvim
+export VISUAL="$EDITOR"
+
+alias nv="nvim"
+alias ll="eza -laF --icons"
+
+bindkey '  ' autosuggest-execute
+### ---
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
