@@ -5,6 +5,10 @@
 vim.opt.hlsearch = true
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
+-- Remap for dealing with word wrap
+vim.keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })
+vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
+
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
@@ -46,6 +50,13 @@ vim.keymap.set('n', '<C-d>', '<C-d>zz')
 vim.keymap.set('n', '<C-u>', '<C-u>zz')
 vim.keymap.set('n', 'n', 'nzzzv')
 vim.keymap.set('n', 'N', 'Nzzzv')
+
+-- Resize windows
+vim.keymap.set('n', '<M-h>', '<C-w><')
+vim.keymap.set('n', '<M-l>', '<C-w>>')
+vim.keymap.set('n', '<M-k>', '<C-w>+')
+vim.keymap.set('n', '<M-j>', '<C-w>-')
+vim.keymap.set('n', '<M-=>', '<C-w>=')
 
 vim.keymap.set('n', '<leader>st', vim.cmd.Ex, { desc = '[S]earch File [T]ree (netrw)' })
 
