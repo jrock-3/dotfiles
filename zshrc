@@ -70,6 +70,7 @@ fi
 # For a full list of active aliases, run `alias`.
 alias nv="nvim"
 alias ll="eza -la --icons --no-user --group-directories-first --time-style long-iso"
+alias lg="lazygit"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
