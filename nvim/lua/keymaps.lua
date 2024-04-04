@@ -45,6 +45,12 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 
 -- Custom Keymaps
 
+-- Vim Tmux Navigation
+vim.keymap.set('n', '<C-h>', '<C-w><C-h>')
+vim.keymap.set('n', '<C-j>', '<C-w><C-j>')
+vim.keymap.set('n', '<C-k>', '<C-w><C-k>')
+vim.keymap.set('n', '<C-l>', '<C-w><C-l>')
+
 -- Center on move
 vim.keymap.set('n', '<C-d>', '<C-d>zz')
 vim.keymap.set('n', '<C-u>', '<C-u>zz')
