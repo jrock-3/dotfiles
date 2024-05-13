@@ -52,8 +52,6 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>')
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>')
 
 -- Center on move
-vim.keymap.set('n', '<C-d>', '<C-d>zz')
-vim.keymap.set('n', '<C-u>', '<C-u>zz')
 vim.keymap.set('n', 'n', 'nzzzv')
 vim.keymap.set('n', 'N', 'Nzzzv')
 
