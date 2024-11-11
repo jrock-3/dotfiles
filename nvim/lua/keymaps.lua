@@ -66,4 +66,8 @@ vim.keymap.set('n', '<leader>st', vim.cmd.Ex, { desc = '[S]earch File [T]ree (ne
 
 vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle, { desc = '[U]ndotree Toggle' })
 
+-- Terminal
+vim.keymap.set('t', [[<C-z>]], [[<C-\><C-n>:lua require('custom/terminal').toggle()<CR>]], { silent = true })
+vim.keymap.set('n', [[<C-z>]], [[:lua require('custom/terminal').toggle()<CR>]], { silent = true })
+
 -- vim: ts=2 sts=2 sw=2 et
