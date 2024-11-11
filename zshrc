@@ -73,8 +73,17 @@ alias l="eza -la --icons --no-user --group-directories-first --time-style long-i
 alias c="clear"
 alias lg="lazygit"
 alias z="zoxide"
+alias mktemp="gmktemp"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 export ZSH_COMPDUMP=$ZSH/cache/.zcompdump-$HOST
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/jrock/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/jrock/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/jrock/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/jrock/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+export PATH=/usr/local/anaconda3/bin:$PATH
+export PATH=/opt/homebrew/anaconda3/bin:$PATH
