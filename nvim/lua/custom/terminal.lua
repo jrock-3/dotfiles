@@ -1,3 +1,4 @@
+-- Source: https://github.com/kutsan/dotfiles/blob/b2046a6c0bcc754fc381351119c14c374721fd4d/.config/nvim/lua/kutsan/mappings/normal/terminal.lua
 -- Toggle floating terminal or create new one if there is none.
 --
 -- tnoremap <silent> <C-z> <C-\><C-n>:lua require('kutsan/mappings/normal/terminal').toggle()<CR>
