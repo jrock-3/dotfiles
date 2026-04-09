@@ -188,18 +188,19 @@ install_ohmyposh_theme() {
 install_neovim_linux() {
     has nvim && { ok "neovim"; return; }
     info "Installing neovim..."
-    local appimage="/tmp/nvim-linux-x86_64.appimage"
-    curl -fLo "$appimage" "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.appimage"
-    chmod +x "$appimage"
-    if "$appimage" --version &>/dev/null; then
-        sudo mv "$appimage" /usr/local/bin/nvim
-    else
-        info "FUSE not available — extracting AppImage..."
-        (cd /tmp && "$appimage" --appimage-extract &>/dev/null)
+    local arch; arch="$(uname -m)"
+    if [ "$arch" = "x86_64" ]; then
+        local tarball="/tmp/nvim-linux-x86_64.tar.gz"
+        curl -fLo "$tarball" \
+            "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz"
+        tar xzf "$tarball" -C /tmp
         sudo rm -rf /opt/nvim
-        sudo mv /tmp/squashfs-root /opt/nvim
-        sudo ln -sf /opt/nvim/usr/bin/nvim /usr/local/bin/nvim
-        rm -f "$appimage"
+        sudo mv /tmp/nvim-linux-x86_64 /opt/nvim
+        sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
+        rm -f "$tarball"
+    else
+        info "Non-x86_64 arch ($arch) — installing from package manager..."
+        pkg_install neovim || { warn "neovim install failed — install manually"; return; }
     fi
     ok "neovim"
 }
