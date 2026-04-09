@@ -21,16 +21,16 @@ return {
         name = 'personal',
         path = '~/notes',
       },
-      {
-        name = 'school',
-        path = '~/school',
-        overrides = {
-          notes_subdir = nil,
-          daily_notes = {},
-          new_notes_location = nil,
-          templates = {},
-        },
-      },
+      -- {
+      --   name = 'school',
+      --   path = '~/school',
+      --   overrides = {
+      --     notes_subdir = nil,
+      --     daily_notes = {},
+      --     new_notes_location = nil,
+      --     templates = {},
+      --   },
+      -- },
     },
 
     -- Alternatively - and for backwards compatibility - you can set 'dir' to a single path instead of
@@ -46,13 +46,13 @@ return {
 
     daily_notes = {
       -- Optional, if you keep daily notes in a separate directory.
-      folder = 'notes/dailies',
+      -- folder = 'notes/dailies',
       -- Optional, if you want to change the date format for the ID of daily notes.
-      date_format = '%Y-%m-%d',
+      -- date_format = '%Y-%m-%d',
       -- Optional, if you want to change the date format of the default alias of daily notes.
-      alias_format = '%B %-d, %Y',
+      -- alias_format = '%B %-d, %Y',
       -- Optional, if you want to automatically insert a template from your template directory like 'daily.md'
-      template = 'daily.md',
+      -- template = 'daily.md',
     },
 
     -- Optional, completion of wiki links, local markdown links, and tags using nvim-cmp.
@@ -167,13 +167,13 @@ return {
     end,
 
     -- Optional, for templates (see below).
-    templates = {
-      subdir = 'templates',
-      date_format = '%Y-%m-%d',
-      time_format = '%H:%M',
-      -- A map for custom variables, the key should be the variable and the value a function
-      substitutions = {},
-    },
+    -- templates = {
+    --   subdir = 'templates',
+    --   date_format = '%Y-%m-%d',
+    --   time_format = '%H:%M',
+    --   -- A map for custom variables, the key should be the variable and the value a function
+    --   substitutions = {},
+    -- },
 
     -- Optional, by default when you use `:ObsidianFollowLink` on a link to an external
     -- URL it will be ignored but you can customize this behavior here.
