@@ -131,7 +131,7 @@ install_deps() {
         if ! has zsh; then
             info "Installing zsh..."
             case "$PKG" in
-                apt)    sudo apt-get install -y zsh ;;
+                apt)    apt_install zsh ;;
                 dnf)    sudo dnf install -y zsh ;;
                 pacman) sudo pacman -S --noconfirm zsh ;;
                 *)      err "Install zsh manually"; exit 1 ;;
@@ -142,7 +142,7 @@ install_deps() {
         # ── git, curl, unzip (prerequisites) ────────────────────
         info "Ensuring git, curl, unzip..."
         case "$PKG" in
-            apt)    sudo apt-get install -y git curl unzip ;;
+            apt)    apt_install git curl unzip ;;
             dnf)    sudo dnf install -y git curl unzip ;;
             pacman) sudo pacman -S --noconfirm git curl unzip ;;
         esac
@@ -151,7 +151,7 @@ install_deps() {
         if ! has tmux; then
             info "Installing tmux..."
             case "$PKG" in
-                apt)    sudo apt-get install -y tmux ;;
+                apt)    apt_install tmux ;;
                 dnf)    sudo dnf install -y tmux ;;
                 pacman) sudo pacman -S --noconfirm tmux ;;
             esac
@@ -205,7 +205,7 @@ install_deps() {
            ! [ -f /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
             info "Installing zsh-syntax-highlighting..."
             case "$PKG" in
-                apt)    sudo apt-get install -y zsh-syntax-highlighting ;;
+                apt)    apt_install zsh-syntax-highlighting ;;
                 dnf)    sudo dnf install -y zsh-syntax-highlighting ;;
                 pacman) sudo pacman -S --noconfirm zsh-syntax-highlighting ;;
                 *)
@@ -244,7 +244,7 @@ install_deps() {
                         | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
                     echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
                         | sudo tee /etc/apt/sources.list.d/gierens.list >/dev/null
-                    sudo apt-get update -qq && sudo apt-get install -y eza
+                    wait_for_apt && sudo apt-get update -qq && apt_install eza
                     ;;
                 dnf)    sudo dnf install -y eza ;;
                 pacman) sudo pacman -S --noconfirm eza ;;
@@ -258,9 +258,10 @@ install_deps() {
             info "Installing lazygit..."
             case "$PKG" in
                 apt)
-                    sudo add-apt-repository -y ppa:lazygit-team/release 2>/dev/null \
+                    wait_for_apt \
+                        && sudo add-apt-repository -y ppa:lazygit-team/release 2>/dev/null \
                         && sudo apt-get update -qq \
-                        && sudo apt-get install -y lazygit \
+                        && apt_install lazygit \
                         || warn "PPA failed — install lazygit manually: https://github.com/jesseduffield/lazygit#installation"
                     ;;
                 dnf)    sudo dnf copr enable -y atim/lazygit && sudo dnf install -y lazygit ;;
@@ -274,7 +275,7 @@ install_deps() {
         if ! has zoxide; then
             info "Installing zoxide..."
             case "$PKG" in
-                apt)    sudo apt-get install -y zoxide ;;
+                apt)    apt_install zoxide ;;
                 dnf)    sudo dnf install -y zoxide ;;
                 pacman) sudo pacman -S --noconfirm zoxide ;;
                 *)      warn "Install zoxide manually: https://github.com/ajeetdsouza/zoxide#installation" ;;
