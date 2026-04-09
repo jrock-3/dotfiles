@@ -320,9 +320,17 @@ install_deps_linux() {
 
     # Clean up stale third-party repos from previous install attempts
     if [ "$PKG" = "apt" ]; then
-        for _stale in /etc/apt/sources.list.d/lazygit*.list /etc/apt/sources.list.d/gierens.list; do
+        for _stale in \
+            /etc/apt/sources.list.d/lazygit*.list \
+            /etc/apt/sources.list.d/lazygit*.sources \
+            /etc/apt/sources.list.d/gierens.list \
+            /etc/apt/sources.list.d/gierens.sources; do
             [ -f "$_stale" ] && { info "Removing stale apt source: $_stale"; sudo rm -f "$_stale"; }
         done
+        # Also remove via add-apt-repository if available (handles PPA cleanup properly)
+        if has add-apt-repository; then
+            sudo add-apt-repository --remove -y ppa:lazygit-team/release 2>/dev/null || true
+        fi
         wait_for_apt; sudo apt-get update -qq
     fi
 
