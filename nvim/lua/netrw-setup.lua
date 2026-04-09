@@ -31,7 +31,8 @@ vim.g.netrw_liststyle = 0
 
 -- Patterns for hiding files, e.g. node_modules
 -- NOTE: this works by reading '.gitignore' file
--- vim.g.netrw_list_hide = vim.fn["netrw_gitignore#Hide"]()
+-- local ok, hide = pcall(vim.fn["netrw_gitignore#Hide"])
+vim.g.netrw_list_hide = ok and hide or ""
 
 -- Show hidden files
 -- 0 : show all files
