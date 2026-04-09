@@ -4,6 +4,9 @@
 # ~/.local/bin: pip, oh-my-posh (Linux), etc.
 export PATH=$HOME/bin:/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH
 
+# Disable terminal flow control so C-s passes through (for save keybinds)
+stty -ixon 2>/dev/null
+
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
