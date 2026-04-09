@@ -1,5 +1,8 @@
 # If you come from bash you might have to change your $PATH.
-export PATH=$HOME/bin:/usr/local/bin:$HOME/.local/bin:$PATH
+# /opt/homebrew/bin: Apple Silicon Homebrew
+# /usr/local/bin: Intel Homebrew / standard Linux
+# ~/.local/bin: pip, oh-my-posh (Linux), etc.
+export PATH=$HOME/bin:/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -8,7 +11,12 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="robbyrussell"
+# Disable oh-my-zsh theme when oh-my-posh is available (it handles the prompt)
+if command -v oh-my-posh &>/dev/null || [ -x "$HOME/.local/bin/oh-my-posh" ]; then
+    ZSH_THEME=""
+else
+    ZSH_THEME="robbyrussell"
+fi
 
 # Uncomment the following line to change how often to auto-update (in days).
 # zstyle ':omz:update' frequency 13
@@ -41,16 +49,57 @@ HIST_STAMPS="yyyy-mm-dd"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 plugins=(git zsh-autosuggestions)
 
-source $ZSH/oh-my-zsh.sh
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+if [ -f "$ZSH/oh-my-zsh.sh" ]; then
+    source "$ZSH/oh-my-zsh.sh"
+fi
+
+# zsh-syntax-highlighting: check Homebrew (macOS) then common Linux paths
+if [ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+    source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+elif [ -f /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+    source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+elif [ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+    source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
 
 # User configuration
 export EDITOR=nvim
 export VISUAL="$EDITOR"
 
-bindkey '  ' autosuggest-execute
+# Double-space to accept and run the autosuggestion; single space types normally.
+_double_space_execute() {
+    if [[ "$LBUFFER" == *" " ]] && [[ -n "$POSTDISPLAY" ]]; then
+        zle autosuggest-execute
+    else
+        zle self-insert
+    fi
+}
+zle -N _double_space_execute
+bindkey ' ' _double_space_execute
 
-eval "$(oh-my-posh init zsh --config $(brew --prefix oh-my-posh)/themes/catppuccin_mocha.omp.json)"
+_omp_bin=""
+if command -v oh-my-posh &>/dev/null; then
+    _omp_bin="oh-my-posh"
+elif [ -x "$HOME/.local/bin/oh-my-posh" ]; then
+    _omp_bin="$HOME/.local/bin/oh-my-posh"
+fi
+if [ -n "$_omp_bin" ]; then
+    _omp_theme="catppuccin_mocha.omp.json"
+    _omp_config=""
+    if command -v brew &>/dev/null; then
+        _omp_config="$(brew --prefix oh-my-posh)/themes/$_omp_theme"
+    elif [ -f "$HOME/.cache/oh-my-posh/themes/$_omp_theme" ]; then
+        _omp_config="$HOME/.cache/oh-my-posh/themes/$_omp_theme"
+    elif [ -f "/usr/local/share/oh-my-posh/themes/$_omp_theme" ]; then
+        _omp_config="/usr/local/share/oh-my-posh/themes/$_omp_theme"
+    fi
+    if [ -n "$_omp_config" ] && [ -f "$_omp_config" ]; then
+        eval "$("$_omp_bin" init zsh --config "$_omp_config")"
+    else
+        eval "$("$_omp_bin" init zsh)"
+    fi
+    unset _omp_theme _omp_config _omp_bin
+fi
 
 export MANPATH="/usr/local/man:$MANPATH"
 
@@ -59,9 +108,9 @@ export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
-  export EDITOR='vim'
+ export EDITOR='vim'
 else
-  export EDITOR='nvim'
+ export EDITOR='nvim'
 fi
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
@@ -69,21 +118,28 @@ fi
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # For a full list of active aliases, run `alias`.
 alias nv="nvim"
-alias l="eza -la --icons --no-user --group-directories-first --time-style long-iso"
 alias c="clear"
-alias lg="lazygit"
-alias z="zoxide"
-alias mktemp="gmktemp"
+
+command -v eza &>/dev/null && alias l="eza -la --icons --no-user --group-directories-first --time-style long-iso"
+command -v lazygit &>/dev/null && alias lg="lazygit"
+if command -v zoxide &>/dev/null; then
+    unalias z 2>/dev/null
+    eval "$(zoxide init zsh)"
+fi
+command -v gmktemp &>/dev/null && alias mktemp="gmktemp"
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 export ZSH_COMPDUMP=$ZSH/cache/.zcompdump-$HOST
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/jrock/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/jrock/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+# Google Cloud SDK
+if [ -f "$HOME/Downloads/google-cloud-sdk/path.zsh.inc" ]; then
+    source "$HOME/Downloads/google-cloud-sdk/path.zsh.inc"
+fi
+if [ -f "$HOME/Downloads/google-cloud-sdk/completion.zsh.inc" ]; then
+    source "$HOME/Downloads/google-cloud-sdk/completion.zsh.inc"
+fi
 
-# The next line enables shell command completion for gcloud.
-if [ -f '/Users/jrock/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/jrock/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
-export PATH=/usr/local/anaconda3/bin:$PATH
-export PATH=/opt/homebrew/anaconda3/bin:$PATH
+[ -d /usr/local/anaconda3/bin ] && export PATH=/usr/local/anaconda3/bin:$PATH
+[ -d /opt/homebrew/anaconda3/bin ] && export PATH=/opt/homebrew/anaconda3/bin:$PATH

@@ -15,6 +15,18 @@ err()   { printf '\033[1;31m  ✗ %s\033[0m\n' "$*"; }
 
 has() { command -v "$1" &>/dev/null; }
 
+wait_for_apt() {
+    while sudo fuser /var/lib/dpkg/lock-frontend &>/dev/null 2>&1; do
+        warn "Waiting for dpkg lock..."
+        sleep 5
+    done
+}
+
+apt_install() {
+    wait_for_apt
+    sudo apt-get install -y "$@"
+}
+
 portable_sed() {
     if sed --version &>/dev/null; then
         sed -i "$@"
@@ -107,6 +119,7 @@ install_deps() {
         local PKG=""
         if has apt-get; then
             PKG="apt"
+            wait_for_apt
             sudo apt-get update -qq
         elif has dnf; then
             PKG="dnf"
