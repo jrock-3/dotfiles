@@ -66,8 +66,6 @@ elif [ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
 fi
 
 # User configuration
-export EDITOR=nvim
-export VISUAL="$EDITOR"
 
 # Double-space to accept and run the autosuggestion; single space types normally.
 _double_space_execute() {
@@ -90,7 +88,7 @@ if [ -n "$_omp_bin" ]; then
     _omp_theme="catppuccin_mocha.omp.json"
     _omp_config=""
     if command -v brew &>/dev/null; then
-        _omp_config="$(brew --prefix oh-my-posh)/themes/$_omp_theme"
+        _omp_config="$(brew --prefix oh-my-posh 2>/dev/null)/themes/$_omp_theme"
     elif [ -f "$HOME/.cache/oh-my-posh/themes/$_omp_theme" ]; then
         _omp_config="$HOME/.cache/oh-my-posh/themes/$_omp_theme"
     elif [ -f "/usr/local/share/oh-my-posh/themes/$_omp_theme" ]; then
@@ -109,12 +107,12 @@ export MANPATH="/usr/local/man:$MANPATH"
 # You may need to manually set your language environment
 export LANG=en_US.UTF-8
 
-# Preferred editor for local and remote sessions
-if [[ -n $SSH_CONNECTION ]]; then
- export EDITOR='vim'
+if command -v nvim &>/dev/null; then
+    export EDITOR='nvim'
 else
- export EDITOR='nvim'
+    export EDITOR='vim'
 fi
+export VISUAL="$EDITOR"
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh

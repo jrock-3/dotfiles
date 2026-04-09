@@ -5,8 +5,50 @@ if [ -z "${BASH_VERSION:-}" ]; then
 fi
 set -euo pipefail
 
-DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_URL="https://github.com/jrock-3/dotfiles.git"
+DEFAULT_DIR="$HOME/git-repos/dotfiles"
 SKIP_DEPS="${SKIP_DEPS:-}"
+
+# ── Bootstrap: detect if we're inside the repo or need to clone it ────
+_script_dir=""
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+    _script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+if [ -n "$_script_dir" ] && [ -f "$_script_dir/zshrc" ] && [ -d "$_script_dir/nvim" ]; then
+    DOTFILES_DIR="$_script_dir"
+else
+    DOTFILES_DIR="${DOTFILES_DIR:-$DEFAULT_DIR}"
+
+    _ensure_git() {
+        command -v git &>/dev/null && return
+        echo "==> git not found — installing minimal prerequisites..."
+        if command -v apt-get &>/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install -y git curl
+        elif command -v dnf &>/dev/null; then
+            sudo dnf install -y git curl
+        elif command -v pacman &>/dev/null; then
+            sudo pacman -S --noconfirm git curl
+        elif command -v brew &>/dev/null; then
+            brew install git
+        else
+            echo "ERROR: git is required but can't be auto-installed. Install git and re-run." >&2
+            exit 1
+        fi
+    }
+
+    if [ ! -d "$DOTFILES_DIR/.git" ]; then
+        _ensure_git
+        echo "==> Cloning dotfiles to $DOTFILES_DIR..."
+        mkdir -p "$(dirname "$DOTFILES_DIR")"
+        git clone "$REPO_URL" "$DOTFILES_DIR"
+    fi
+
+    if [ -f "$DOTFILES_DIR/install.sh" ]; then
+        echo "==> Re-launching from cloned repo..."
+        exec bash "$DOTFILES_DIR/install.sh" "$@"
+    fi
+fi
 
 info()  { printf '\033[1;34m==> %s\033[0m\n' "$*"; }
 warn()  { printf '\033[1;33m  ! %s\033[0m\n' "$*"; }
@@ -16,15 +58,31 @@ err()   { printf '\033[1;31m  ✗ %s\033[0m\n' "$*"; }
 has() { command -v "$1" &>/dev/null; }
 
 wait_for_apt() {
+    local max_wait=120 waited=0
     while sudo fuser /var/lib/dpkg/lock-frontend &>/dev/null 2>&1; do
+        if [ "$waited" -ge "$max_wait" ]; then
+            warn "Timed out waiting for dpkg lock after ${max_wait}s — trying anyway"
+            return
+        fi
         warn "Waiting for dpkg lock..."
         sleep 5
+        waited=$((waited + 5))
     done
 }
 
 apt_install() {
     wait_for_apt
     sudo apt-get install -y "$@"
+}
+
+# Installs a tool; failure is non-fatal (warns instead of aborting)
+try_install() {
+    local name="$1"; shift
+    if "$@"; then
+        ok "$name"
+    else
+        warn "$name install failed — install manually"
+    fi
 }
 
 portable_sed() {
@@ -77,12 +135,13 @@ install_deps() {
         fi
 
         info "Installing Homebrew packages..."
-        brew install neovim tmux eza lazygit zoxide zsh-syntax-highlighting oh-my-posh
+        brew install neovim tmux eza lazygit zoxide zsh-syntax-highlighting oh-my-posh fzf
 
+        # ── oh-my-zsh ────────────────────────────────────────────
         # ── oh-my-zsh ────────────────────────────────────────────
         if [ ! -d "$HOME/.oh-my-zsh" ]; then
             info "Installing oh-my-zsh..."
-            sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+            KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
         fi
         ok "oh-my-zsh"
 
@@ -97,6 +156,7 @@ install_deps() {
         # ── TPM (tmux plugin manager) ────────────────────────────
         if [ ! -d "$HOME/.config/tmux/plugins/tpm" ]; then
             info "Installing TPM..."
+            mkdir -p "$HOME/.config/tmux/plugins"
             git clone https://github.com/tmux-plugins/tpm "$HOME/.config/tmux/plugins/tpm"
         fi
         ok "tpm"
@@ -116,6 +176,11 @@ install_deps() {
     elif [ "$OS" = "Linux" ]; then
         info "Linux detected — installing dependencies"
 
+        if ! has sudo; then
+            err "sudo is required but not found"
+            exit 1
+        fi
+
         local PKG=""
         if has apt-get; then
             PKG="apt"
@@ -125,6 +190,9 @@ install_deps() {
             PKG="dnf"
         elif has pacman; then
             PKG="pacman"
+        else
+            err "No supported package manager found (apt, dnf, pacman)"
+            exit 1
         fi
 
         # ── zsh ──────────────────────────────────────────────────
@@ -134,7 +202,6 @@ install_deps() {
                 apt)    apt_install zsh ;;
                 dnf)    sudo dnf install -y zsh ;;
                 pacman) sudo pacman -S --noconfirm zsh ;;
-                *)      err "Install zsh manually"; exit 1 ;;
             esac
         fi
         ok "zsh"
@@ -161,6 +228,7 @@ install_deps() {
         # ── TPM (tmux plugin manager) ────────────────────────────
         if [ ! -d "$HOME/.config/tmux/plugins/tpm" ]; then
             info "Installing TPM..."
+            mkdir -p "$HOME/.config/tmux/plugins"
             git clone https://github.com/tmux-plugins/tpm "$HOME/.config/tmux/plugins/tpm"
         fi
         ok "tpm"
@@ -180,7 +248,7 @@ install_deps() {
                 sudo mv /tmp/squashfs-root /opt/nvim
                 sudo ln -sf /opt/nvim/usr/bin/nvim /usr/local/bin/nvim
                 rm -f /tmp/nvim-linux-x86_64.appimage
-                cd -
+                cd - >/dev/null
             fi
         fi
         ok "neovim"
@@ -188,7 +256,7 @@ install_deps() {
         # ── oh-my-zsh ────────────────────────────────────────────
         if [ ! -d "$HOME/.oh-my-zsh" ]; then
             info "Installing oh-my-zsh..."
-            sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+            KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
         fi
         ok "oh-my-zsh"
 
@@ -205,19 +273,20 @@ install_deps() {
            ! [ -f /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
             info "Installing zsh-syntax-highlighting..."
             case "$PKG" in
-                apt)    apt_install zsh-syntax-highlighting ;;
-                dnf)    sudo dnf install -y zsh-syntax-highlighting ;;
-                pacman) sudo pacman -S --noconfirm zsh-syntax-highlighting ;;
+                apt)    try_install "zsh-syntax-highlighting" apt_install zsh-syntax-highlighting ;;
+                dnf)    try_install "zsh-syntax-highlighting" sudo dnf install -y zsh-syntax-highlighting ;;
+                pacman) try_install "zsh-syntax-highlighting" sudo pacman -S --noconfirm zsh-syntax-highlighting ;;
                 *)
                     git clone https://github.com/zsh-users/zsh-syntax-highlighting \
                         "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
                     ;;
             esac
+        else
+            ok "zsh-syntax-highlighting"
         fi
-        ok "zsh-syntax-highlighting"
 
         # ── oh-my-posh ───────────────────────────────────────────
-        if ! has oh-my-posh; then
+        if ! has oh-my-posh && ! [ -x "$HOME/.local/bin/oh-my-posh" ]; then
             info "Installing oh-my-posh..."
             curl -fsSL https://ohmyposh.dev/install.sh | bash -s
         fi
@@ -234,40 +303,56 @@ install_deps() {
         fi
         ok "oh-my-posh theme"
 
-        # ── eza ──────────────────────────────────────────────────
+        # ── fzf ──────────────────────────────────────────────────
+        if ! has fzf; then
+            info "Installing fzf..."
+            case "$PKG" in
+                apt)    try_install "fzf" apt_install fzf ;;
+                dnf)    try_install "fzf" sudo dnf install -y fzf ;;
+                pacman) try_install "fzf" sudo pacman -S --noconfirm fzf ;;
+            esac
+        else
+            ok "fzf"
+        fi
+
+        # ── eza (non-critical) ───────────────────────────────────
         if ! has eza; then
             info "Installing eza..."
-            case "$PKG" in
-                apt)
-                    sudo mkdir -p /etc/apt/keyrings
-                    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc \
-                        | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-                    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
-                        | sudo tee /etc/apt/sources.list.d/gierens.list >/dev/null
-                    wait_for_apt && sudo apt-get update -qq && apt_install eza
-                    ;;
-                dnf)    sudo dnf install -y eza ;;
-                pacman) sudo pacman -S --noconfirm eza ;;
-                *)      warn "Install eza manually: https://github.com/eza-community/eza" ;;
-            esac
+            (
+                case "$PKG" in
+                    apt)
+                        sudo mkdir -p /etc/apt/keyrings
+                        curl -fsSL https://raw.githubusercontent.com/eza-community/eza/main/deb.asc \
+                            | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/gierens.gpg
+                        echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
+                            | sudo tee /etc/apt/sources.list.d/gierens.list >/dev/null
+                        wait_for_apt && sudo apt-get update -qq && apt_install eza
+                        ;;
+                    dnf)    sudo dnf install -y eza ;;
+                    pacman) sudo pacman -S --noconfirm eza ;;
+                    *)      false ;;
+                esac
+            ) || warn "eza install failed — install manually: https://github.com/eza-community/eza"
         fi
-        ok "eza"
+        has eza && ok "eza" || warn "eza not installed"
 
-        # ── lazygit ──────────────────────────────────────────────
+        # ── lazygit (non-critical) ───────────────────────────────
         if ! has lazygit; then
             info "Installing lazygit..."
-            case "$PKG" in
-                apt)
-                    wait_for_apt \
-                        && sudo add-apt-repository -y ppa:lazygit-team/release 2>/dev/null \
-                        && sudo apt-get update -qq \
-                        && apt_install lazygit \
-                        || warn "PPA failed — install lazygit manually: https://github.com/jesseduffield/lazygit#installation"
-                    ;;
-                dnf)    sudo dnf copr enable -y atim/lazygit && sudo dnf install -y lazygit ;;
-                pacman) sudo pacman -S --noconfirm lazygit ;;
-                *)      warn "Install lazygit manually: https://github.com/jesseduffield/lazygit" ;;
-            esac
+            (
+                case "$PKG" in
+                    apt)
+                        has add-apt-repository || apt_install software-properties-common
+                        wait_for_apt
+                        sudo add-apt-repository -y ppa:lazygit-team/release 2>/dev/null
+                        sudo apt-get update -qq
+                        apt_install lazygit
+                        ;;
+                    dnf)    sudo dnf copr enable -y atim/lazygit && sudo dnf install -y lazygit ;;
+                    pacman) sudo pacman -S --noconfirm lazygit ;;
+                    *)      false ;;
+                esac
+            ) || warn "lazygit install failed — install manually: https://github.com/jesseduffield/lazygit"
         fi
         has lazygit && ok "lazygit" || warn "lazygit not installed"
 
@@ -275,13 +360,13 @@ install_deps() {
         if ! has zoxide; then
             info "Installing zoxide..."
             case "$PKG" in
-                apt)    apt_install zoxide ;;
-                dnf)    sudo dnf install -y zoxide ;;
-                pacman) sudo pacman -S --noconfirm zoxide ;;
-                *)      warn "Install zoxide manually: https://github.com/ajeetdsouza/zoxide#installation" ;;
+                apt)    try_install "zoxide" apt_install zoxide ;;
+                dnf)    try_install "zoxide" sudo dnf install -y zoxide ;;
+                pacman) try_install "zoxide" sudo pacman -S --noconfirm zoxide ;;
             esac
+        else
+            ok "zoxide"
         fi
-        has zoxide && ok "zoxide" || warn "zoxide not installed"
 
         # ── nvm + Node LTS ───────────────────────────────────────
         if [ ! -d "$HOME/.nvm" ]; then
@@ -344,14 +429,30 @@ backup_and_link "$DOTFILES_DIR/tmux.conf" "$HOME/.config/tmux/tmux.conf"
 info "Linking zsh config..."
 backup_and_link "$DOTFILES_DIR/zshrc" "$HOME/.zshrc"
 
+# ── Install tmux plugins via TPM ──────────────────────────────────────
+TPM_INSTALL="$HOME/.config/tmux/plugins/tpm/bin/install_plugins"
+if [ -x "$TPM_INSTALL" ]; then
+    info "Installing tmux plugins..."
+    "$TPM_INSTALL" >/dev/null 2>&1 || warn "TPM plugin install failed — run prefix + I in tmux"
+    ok "tmux plugins"
+fi
+
 # ── Set default shell to zsh if it isn't already ─────────────────────
 if [ "$(basename "$SHELL")" != "zsh" ] && has zsh; then
     info "Setting default shell to zsh..."
-    sudo chsh -s "$(which zsh)" "$(whoami)" 2>/dev/null || warn "Run manually: chsh -s \$(which zsh)"
+    if has chsh; then
+        sudo chsh -s "$(which zsh)" "$(whoami)" 2>/dev/null \
+            || warn "chsh failed — run manually: chsh -s \$(which zsh)"
+    else
+        warn "chsh not found — add 'exec zsh -l' to ~/.bashrc to use zsh"
+    fi
 fi
 
 echo ""
 info "Done! You may want to:"
 echo "  • Restart your shell or run:  exec zsh"
-echo "  • In tmux, press prefix + I to install plugins via TPM"
 echo "  • Open nvim to trigger lazy.nvim plugin install"
+if [ -d "$HOME/.dotfiles-backup" ]; then
+    echo ""
+    info "Your previous configs were backed up to ~/.dotfiles-backup/"
+fi
