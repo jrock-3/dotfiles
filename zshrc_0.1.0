@@ -1,3 +1,0 @@
-alias vim="nvim"
-alias vi="nvim"
-export PATH="$HOME/.local/share/nvim/mason/bin/:$PATH"
