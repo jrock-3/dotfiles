@@ -222,27 +222,27 @@ install_fzf_linux() {
     has fzf && { ok "fzf"; return; }
     info "Installing fzf..."
     if pkg_install fzf 2>/dev/null; then
-        ok "fzf"
-    elif [ ! -d "$HOME/.fzf" ]; then
-        git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
-        "$HOME/.fzf/install" --bin
-        sudo install "$HOME/.fzf/bin/fzf" /usr/local/bin/fzf 2>/dev/null \
-            || ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"
-        ok "fzf"
-    else
-        ok "fzf"
+        ok "fzf"; return
     fi
+    if [ ! -d "$HOME/.fzf" ]; then
+        git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+    fi
+    "$HOME/.fzf/install" --bin --no-key-bindings --no-completion --no-update-rc
+    mkdir -p "$HOME/.local/bin"
+    sudo install "$HOME/.fzf/bin/fzf" /usr/local/bin/fzf 2>/dev/null \
+        || ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"
+    has fzf && ok "fzf" || warn "fzf install failed"
 }
 
 install_zoxide_linux() {
     has zoxide && { ok "zoxide"; return; }
     info "Installing zoxide..."
     if pkg_install zoxide 2>/dev/null; then
-        ok "zoxide"
-    else
-        curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
-        has zoxide && ok "zoxide" || warn "zoxide install failed"
+        ok "zoxide"; return
     fi
+    mkdir -p "$HOME/.local/bin"
+    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+    has zoxide && ok "zoxide" || warn "zoxide install failed"
 }
 
 install_eza_linux() {
@@ -250,12 +250,14 @@ install_eza_linux() {
     info "Installing eza..."
     (
         local arch; arch="$(uname -m)"
-        [ "$arch" = "aarch64" ] && arch="aarch64"
-        [ "$arch" = "x86_64" ]  && arch="x86_64"
+        case "$arch" in
+            x86_64|aarch64) ;;
+            *) warn "eza: unsupported arch $arch"; false ;;
+        esac
         local tarball="/tmp/eza.tar.gz"
         curl -fsSLo "$tarball" \
             "https://github.com/eza-community/eza/releases/latest/download/eza_${arch}-unknown-linux-gnu.tar.gz"
-        tar xzf "$tarball" -C /tmp
+        tar xzf "$tarball" -C /tmp eza
         sudo install /tmp/eza /usr/local/bin/eza
         rm -f /tmp/eza "$tarball"
     ) || warn "eza install failed — https://github.com/eza-community/eza"
@@ -268,9 +270,11 @@ install_lazygit_linux() {
     (
         local ver arch="$(uname -m)"
         [ "$arch" = "aarch64" ] && arch="arm64"
-        ver="$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')"
+        ver="$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest \
+            | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')"
+        [ -z "$ver" ] && { warn "Could not determine latest lazygit version"; false; }
         curl -fsSLo /tmp/lazygit.tar.gz \
-            "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${ver}_Linux_${arch}.tar.gz"
+            "https://github.com/jesseduffield/lazygit/releases/download/v${ver}/lazygit_${ver}_Linux_${arch}.tar.gz"
         tar xzf /tmp/lazygit.tar.gz -C /tmp lazygit
         sudo install /tmp/lazygit /usr/local/bin/lazygit
         rm -f /tmp/lazygit /tmp/lazygit.tar.gz
@@ -314,7 +318,13 @@ install_deps_linux() {
     has sudo || { err "sudo is required but not found"; exit 1; }
     [ -n "$PKG" ] || { err "No supported package manager found (apt, dnf, pacman)"; exit 1; }
 
-    [ "$PKG" = "apt" ] && { wait_for_apt; sudo apt-get update -qq; }
+    # Clean up stale third-party repos from previous install attempts
+    if [ "$PKG" = "apt" ]; then
+        for _stale in /etc/apt/sources.list.d/lazygit*.list /etc/apt/sources.list.d/gierens.list; do
+            [ -f "$_stale" ] && { info "Removing stale apt source: $_stale"; sudo rm -f "$_stale"; }
+        done
+        wait_for_apt; sudo apt-get update -qq
+    fi
 
     # Core prerequisites
     ensure_pkg zsh    zsh
