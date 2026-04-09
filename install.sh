@@ -29,20 +29,20 @@ if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
     _script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
+_ensure_git() {
+    command -v git &>/dev/null && return
+    echo "==> git not found — installing minimal prerequisites..."
+    if   command -v apt-get &>/dev/null; then sudo apt-get update -qq && sudo apt-get install -y git curl
+    elif command -v dnf &>/dev/null;     then sudo dnf install -y git curl
+    elif command -v pacman &>/dev/null;  then sudo pacman -S --noconfirm git curl
+    elif command -v brew &>/dev/null;    then brew install git
+    else echo "ERROR: install git manually and re-run." >&2; exit 1; fi
+}
+
 if [ -n "$_script_dir" ] && [ -f "$_script_dir/zshrc" ] && [ -d "$_script_dir/nvim" ]; then
     DOTFILES_DIR="$_script_dir"
 else
     DOTFILES_DIR="${DOTFILES_DIR:-$DEFAULT_DIR}"
-
-    _ensure_git() {
-        has git && return
-        echo "==> git not found — installing minimal prerequisites..."
-        if   has apt-get; then sudo apt-get update -qq && sudo apt-get install -y git curl
-        elif has dnf;     then sudo dnf install -y git curl
-        elif has pacman;  then sudo pacman -S --noconfirm git curl
-        elif has brew;    then brew install git
-        else echo "ERROR: install git manually and re-run." >&2; exit 1; fi
-    }
 
     if [ ! -d "$DOTFILES_DIR/.git" ]; then
         _ensure_git
@@ -55,6 +55,14 @@ else
         echo "==> Re-launching from cloned repo..."
         exec bash "$DOTFILES_DIR/install.sh" "$@"
     fi
+fi
+
+# Pull latest changes if the repo already exists
+if [ -d "$DOTFILES_DIR/.git" ]; then
+    _ensure_git
+    info "Pulling latest dotfiles..."
+    git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null \
+        || warn "Could not pull latest — continuing with current version"
 fi
 
 # ─── Platform detection ──────────────────────────────────────────────
@@ -152,10 +160,15 @@ install_zsh_autosuggestions() {
 
 install_zsh_syntax_highlighting() {
     if [ "$OS" = "Darwin" ]; then return; fi  # handled by brew install
-    [ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && { ok "zsh-syntax-highlighting"; return; }
-    [ -f /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && { ok "zsh-syntax-highlighting"; return; }
+    for _p in /usr/share /usr/local/share; do
+        [ -f "$_p/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && { ok "zsh-syntax-highlighting"; return; }
+    done
+    local dest="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+    [ -d "$dest" ] && { ok "zsh-syntax-highlighting"; return; }
     info "Installing zsh-syntax-highlighting..."
-    pkg_install zsh-syntax-highlighting || warn "zsh-syntax-highlighting install failed"
+    pkg_install zsh-syntax-highlighting 2>/dev/null \
+        || git clone https://github.com/zsh-users/zsh-syntax-highlighting "$dest"
+    ok "zsh-syntax-highlighting"
 }
 
 install_tpm() {
@@ -205,22 +218,46 @@ install_neovim_linux() {
     ok "neovim"
 }
 
+install_fzf_linux() {
+    has fzf && { ok "fzf"; return; }
+    info "Installing fzf..."
+    if pkg_install fzf 2>/dev/null; then
+        ok "fzf"
+    elif [ ! -d "$HOME/.fzf" ]; then
+        git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+        "$HOME/.fzf/install" --bin
+        sudo install "$HOME/.fzf/bin/fzf" /usr/local/bin/fzf 2>/dev/null \
+            || ln -sf "$HOME/.fzf/bin/fzf" "$HOME/.local/bin/fzf"
+        ok "fzf"
+    else
+        ok "fzf"
+    fi
+}
+
+install_zoxide_linux() {
+    has zoxide && { ok "zoxide"; return; }
+    info "Installing zoxide..."
+    if pkg_install zoxide 2>/dev/null; then
+        ok "zoxide"
+    else
+        curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+        has zoxide && ok "zoxide" || warn "zoxide install failed"
+    fi
+}
+
 install_eza_linux() {
     has eza && { ok "eza"; return; }
     info "Installing eza..."
     (
-        case "$PKG" in
-            apt)
-                sudo mkdir -p /etc/apt/keyrings
-                curl -fsSL https://raw.githubusercontent.com/eza-community/eza/main/deb.asc \
-                    | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/gierens.gpg
-                echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
-                    | sudo tee /etc/apt/sources.list.d/gierens.list >/dev/null
-                wait_for_apt && sudo apt-get update -qq && apt_install eza ;;
-            dnf)    sudo dnf install -y eza ;;
-            pacman) sudo pacman -S --noconfirm eza ;;
-            *)      false ;;
-        esac
+        local arch; arch="$(uname -m)"
+        [ "$arch" = "aarch64" ] && arch="aarch64"
+        [ "$arch" = "x86_64" ]  && arch="x86_64"
+        local tarball="/tmp/eza.tar.gz"
+        curl -fsSLo "$tarball" \
+            "https://github.com/eza-community/eza/releases/latest/download/eza_${arch}-unknown-linux-gnu.tar.gz"
+        tar xzf "$tarball" -C /tmp
+        sudo install /tmp/eza /usr/local/bin/eza
+        rm -f /tmp/eza "$tarball"
     ) || warn "eza install failed — https://github.com/eza-community/eza"
     has eza && ok "eza" || true
 }
@@ -229,16 +266,14 @@ install_lazygit_linux() {
     has lazygit && { ok "lazygit"; return; }
     info "Installing lazygit..."
     (
-        case "$PKG" in
-            apt)
-                has add-apt-repository || apt_install software-properties-common
-                wait_for_apt
-                sudo add-apt-repository -y ppa:lazygit-team/release 2>/dev/null
-                sudo apt-get update -qq && apt_install lazygit ;;
-            dnf)    sudo dnf copr enable -y atim/lazygit && sudo dnf install -y lazygit ;;
-            pacman) sudo pacman -S --noconfirm lazygit ;;
-            *)      false ;;
-        esac
+        local ver arch="$(uname -m)"
+        [ "$arch" = "aarch64" ] && arch="arm64"
+        ver="$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')"
+        curl -fsSLo /tmp/lazygit.tar.gz \
+            "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${ver}_Linux_${arch}.tar.gz"
+        tar xzf /tmp/lazygit.tar.gz -C /tmp lazygit
+        sudo install /tmp/lazygit /usr/local/bin/lazygit
+        rm -f /tmp/lazygit /tmp/lazygit.tar.gz
     ) || warn "lazygit install failed — https://github.com/jesseduffield/lazygit"
     has lazygit && ok "lazygit" || true
 }
@@ -297,8 +332,8 @@ install_deps_linux() {
     # Editors & tools
     install_neovim_linux
     install_tpm
-    try_pkg fzf      fzf
-    try_pkg zoxide   zoxide
+    install_fzf_linux
+    install_zoxide_linux
     install_eza_linux
     install_lazygit_linux
     install_nvm

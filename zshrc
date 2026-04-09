@@ -25,7 +25,8 @@ plugins=(git zsh-autosuggestions)
 for _zsh_hl in \
     /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
     /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
-    /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh; do
+    /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
+    "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"; do
     [ -f "$_zsh_hl" ] && { source "$_zsh_hl"; break; }
 done
 unset _zsh_hl
