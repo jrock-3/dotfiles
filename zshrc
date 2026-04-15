@@ -63,18 +63,6 @@ else
 fi
 export VISUAL="$EDITOR"
 
-# ─── Keybinds ─────────────────────────────────────────────────────────
-# Double-space accepts and runs the autosuggestion; single space is normal.
-_double_space_execute() {
-    if [[ "$LBUFFER" == *" " ]] && [[ -n "$POSTDISPLAY" ]]; then
-        zle autosuggest-execute
-    else
-        zle self-insert
-    fi
-}
-zle -N _double_space_execute
-bindkey ' ' _double_space_execute
-
 # ─── Aliases ──────────────────────────────────────────────────────────
 alias nv="nvim"
 alias c="clear"
