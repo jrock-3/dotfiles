@@ -353,7 +353,7 @@ install_deps_darwin() {
     local brewfile="$DOTFILES_DIR/Brewfile"
     if [ -f "$brewfile" ]; then
         info "Installing Homebrew packages from Brewfile..."
-        brew bundle --file="$brewfile" --no-lock || warn "Some Brewfile entries failed"
+        brew bundle --file="$brewfile" || warn "Some Brewfile entries failed"
     else
         info "Installing Homebrew packages..."
         brew install neovim tmux eza lazygit zoxide zsh-syntax-highlighting fzf

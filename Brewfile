@@ -24,9 +24,6 @@ brew "grpcurl"
 brew "oh-my-posh"
 brew "gawk"
 
-# ─── Media / misc ────────────────────────────────────────────────────
-brew "ffmpeg"
-
 # ─── Fonts (Nerd Font for terminal icons / oh-my-posh) ───────────────
 cask "font-jetbrains-mono-nerd-font"
 
