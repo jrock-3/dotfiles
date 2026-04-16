@@ -1,36 +1,24 @@
+local vault_path = vim.fn.expand '~/notes'
+
 return {
   'epwalsh/obsidian.nvim',
-  version = '*', -- recommended, use latest release instead of latest commit
+  version = '*',
   lazy = true,
   ft = 'markdown',
+  cond = function()
+    return vim.fn.isdirectory(vault_path) == 1
+  end,
 
   dependencies = {
-    -- Required.
     'nvim-lua/plenary.nvim',
   },
 
   opts = {
-    -- A list of workspace names, paths, and configuration overrides.
-    -- If you use the Obsidian app, the 'path' of a workspace should generally be
-    -- your vault root (where the `.obsidian` folder is located).
-    -- When obsidian.nvim is loaded by your plugin manager, it will automatically set
-    -- the workspace to the first workspace in the list whose `path` is a parent of the
-    -- current markdown file being edited.
     workspaces = {
       {
         name = 'personal',
-        path = '~/notes',
+        path = vault_path,
       },
-      -- {
-      --   name = 'school',
-      --   path = '~/school',
-      --   overrides = {
-      --     notes_subdir = nil,
-      --     daily_notes = {},
-      --     new_notes_location = nil,
-      --     templates = {},
-      --   },
-      -- },
     },
 
     -- Alternatively - and for backwards compatibility - you can set 'dir' to a single path instead of

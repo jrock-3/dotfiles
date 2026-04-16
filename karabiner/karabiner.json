@@ -1,0 +1,329 @@
+{
+    "profiles": [
+        {
+            "complex_modifications": {
+                "rules": [
+                    {
+                        "description": "Open or Focus EaaS-GUI",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "e",
+                                    "modifiers": {
+                                        "mandatory": ["right_command"],
+                                        "optional": ["any"]
+                                    }
+                                },
+                                "to": [{ "shell_command": "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH; if pgrep -x \"eaas-gui\" > /dev/null; then osascript -e 'tell application \"System Events\" to tell process \"eaas-gui\" to set frontmost to true'; else /usr/local/bin/eaas-gui & fi" }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Cursor by right command + c",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "c",
+                                    "modifiers": {
+                                        "mandatory": ["right_command"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.todesktop.230313mzl4w4u92" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Azure Data Studio by right command + d",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "d",
+                                    "modifiers": {
+                                        "mandatory": ["right_command"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.azuredatastudio.oss" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open WhatsApp by right command + shift + w",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "w",
+                                    "modifiers": {
+                                        "mandatory": ["right_command", "right_shift"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "net.whatsapp.WhatsApp" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Docker Desktop by right command + c",
+                        "enabled": false,
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "c",
+                                    "modifiers": {
+                                        "mandatory": ["right_command"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.docker.docker" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Zoom by right command + z",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "z",
+                                    "modifiers": {
+                                        "mandatory": ["right_command"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "us.zoom.xos" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Discord by right command + right shift + d",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "d",
+                                    "modifiers": {
+                                        "mandatory": ["right_command", "right_shift"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.hnc.Discord" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Find My by right command + f",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "f",
+                                    "modifiers": {
+                                        "mandatory": ["right_command"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.apple.findmy" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open FaceTime by right command + right shift + f",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "f",
+                                    "modifiers": {
+                                        "mandatory": ["right_command", "right_shift"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.apple.FaceTime" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Rider by right command + r",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "r",
+                                    "modifiers": {
+                                        "mandatory": ["right_command"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.jetbrains.rider" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Roblox by right command + right shift + r",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "r",
+                                    "modifiers": {
+                                        "mandatory": ["right_command", "right_shift"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.roblox.RobloxPlayer" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Slack by right command + s",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "s",
+                                    "modifiers": {
+                                        "mandatory": ["right_command"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.tinyspeck.slackmacgap" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Spotify by right command + right shift + s",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "s",
+                                    "modifiers": {
+                                        "mandatory": ["right_command", "right_shift"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.spotify.client" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Postman by right command + p",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "p",
+                                    "modifiers": {
+                                        "mandatory": ["right_command"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.postmanlabs.mac" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Arc by right command + a",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "a",
+                                    "modifiers": {
+                                        "mandatory": ["right_command"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "company.thebrowser.Browser" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open iTerm2 by right command + t",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "t",
+                                    "modifiers": {
+                                        "mandatory": ["right_command"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.googlecode.iterm2" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open iMessage by right command + right shift + i",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "i",
+                                    "modifiers": {
+                                        "mandatory": ["right_command", "right_shift"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.apple.MobileSMS" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Open Beeper by right command + right shift + m",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "m",
+                                    "modifiers": {
+                                        "mandatory": ["right_command", "right_shift"],
+                                        "optional": ["caps_lock"]
+                                    }
+                                },
+                                "to": [{ "software_function": { "open_application": { "bundle_identifier": "com.automattic.beeper.desktop" } } }],
+                                "type": "basic"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "devices": [
+                {
+                    "identifiers": {
+                        "is_keyboard": true,
+                        "product_id": 50497,
+                        "vendor_id": 1133
+                    },
+                    "simple_modifications": [
+                        {
+                            "from": { "key_code": "left_command" },
+                            "to": [{ "key_code": "left_option" }]
+                        },
+                        {
+                            "from": { "key_code": "left_option" },
+                            "to": [{ "key_code": "left_command" }]
+                        },
+                        {
+                            "from": { "key_code": "right_command" },
+                            "to": [{ "key_code": "right_option" }]
+                        },
+                        {
+                            "from": { "key_code": "right_option" },
+                            "to": [{ "key_code": "right_command" }]
+                        }
+                    ]
+                }
+            ],
+            "name": "Default profile",
+            "selected": true,
+            "virtual_hid_keyboard": { "keyboard_type_v2": "ansi" }
+        }
+    ]
+}

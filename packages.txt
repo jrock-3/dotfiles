@@ -1,0 +1,15 @@
+# Linux packages installed via apt / dnf / pacman.
+# One package per line. Lines starting with # are ignored.
+# These are the base packages — tools with complex install logic
+# (neovim, lazygit, eza, fzf, zoxide, oh-my-posh) are handled
+# separately in install.sh.
+
+zsh
+tmux
+git
+curl
+unzip
+bat
+btop
+ripgrep
+gawk

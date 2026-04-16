@@ -66,6 +66,8 @@ export VISUAL="$EDITOR"
 # ─── Aliases ──────────────────────────────────────────────────────────
 alias nv="nvim"
 alias c="clear"
+alias clip="pbcopy"
+alias t="tmux attach || tmux new"
 command -v eza     &>/dev/null && alias l="eza -la --icons --no-user --group-directories-first --time-style long-iso"
 command -v lazygit &>/dev/null && alias lg="lazygit"
 command -v gmktemp &>/dev/null && alias mktemp="gmktemp"
@@ -76,9 +78,25 @@ if command -v zoxide &>/dev/null; then
     eval "$(zoxide init zsh)"
 fi
 
+# ─── fzf ──────────────────────────────────────────────────────────────
+if command -v fzf &>/dev/null; then
+    eval "$(fzf --zsh 2>/dev/null)" || { [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh; }
+    export FZF_DEFAULT_OPTS=" \
+      --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
+      --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
+      --color=marker:#b4befe,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8 \
+      --border --height=40%"
+fi
+
+# ─── NVM (lazy-loaded for fast shell startup) ─────────────────────────
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ]          && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+    _nvm_load() { unset -f nvm node npm npx; \. "$NVM_DIR/nvm.sh"; [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"; }
+    nvm()  { _nvm_load; nvm  "$@"; }
+    node() { _nvm_load; node "$@"; }
+    npm()  { _nvm_load; npm  "$@"; }
+    npx()  { _nvm_load; npx  "$@"; }
+fi
 
 export ZSH_COMPDUMP=$ZSH/cache/.zcompdump-$HOST
 

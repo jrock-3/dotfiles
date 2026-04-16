@@ -296,15 +296,70 @@ install_nvm() {
     ok "nvm + node"
 }
 
+install_nerd_font() {
+    local font_name="JetBrainsMono"
+    if [ "$OS" = "Darwin" ]; then
+        if brew list --cask "font-jetbrains-mono-nerd-font" &>/dev/null; then
+            ok "Nerd Font ($font_name)"; return
+        fi
+        info "Installing Nerd Font ($font_name)..."
+        brew install --cask "font-jetbrains-mono-nerd-font" \
+            || warn "Nerd Font install failed — install manually from https://www.nerdfonts.com"
+    else
+        local font_dir="$HOME/.local/share/fonts"
+        if ls "$font_dir"/${font_name}*.ttf &>/dev/null 2>&1; then
+            ok "Nerd Font ($font_name)"; return
+        fi
+        info "Installing Nerd Font ($font_name)..."
+        local tmpdir; tmpdir="$(mktemp -d)"
+        mkdir -p "$font_dir"
+        local tarball="$tmpdir/${font_name}.tar.xz"
+        if curl -fsSLo "$tarball" \
+            "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${font_name}.tar.xz"; then
+            tar xf "$tarball" -C "$font_dir"
+        else
+            local zipfile="$tmpdir/${font_name}.zip"
+            curl -fsSLo "$zipfile" \
+                "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${font_name}.zip"
+            unzip -qo "$zipfile" -d "$font_dir"
+        fi
+        rm -rf "$tmpdir"
+        has fc-cache && fc-cache -f "$font_dir"
+        ok "Nerd Font ($font_name)"
+    fi
+}
+
+# Read packages.txt and install each via the system package manager.
+install_linux_packages() {
+    local pkg_file="$DOTFILES_DIR/packages.txt"
+    [ -f "$pkg_file" ] || { warn "packages.txt not found — skipping"; return; }
+    info "Installing packages from packages.txt..."
+    while IFS= read -r line; do
+        line="${line%%#*}"           # strip comments
+        line="${line#"${line%%[![:space:]]*}"}"  # trim leading whitespace
+        line="${line%"${line##*[![:space:]]}"}"  # trim trailing whitespace
+        [ -z "$line" ] && continue
+        has "$line" && { ok "$line"; continue; }
+        pkg_install "$line" || warn "$line install failed"
+    done < "$pkg_file"
+}
+
 # ─── Main install orchestration ──────────────────────────────────────
 
 install_deps_darwin() {
     info "macOS detected"
     install_homebrew
 
-    info "Installing Homebrew packages..."
-    brew install neovim tmux eza lazygit zoxide zsh-syntax-highlighting fzf
+    local brewfile="$DOTFILES_DIR/Brewfile"
+    if [ -f "$brewfile" ]; then
+        info "Installing Homebrew packages from Brewfile..."
+        brew bundle --file="$brewfile" --no-lock || warn "Some Brewfile entries failed"
+    else
+        info "Installing Homebrew packages..."
+        brew install neovim tmux eza lazygit zoxide zsh-syntax-highlighting fzf
+    fi
 
+    install_nerd_font
     install_ohmyposh
     install_ohmyposh_theme
     install_ohmyzsh
@@ -327,7 +382,6 @@ install_deps_linux() {
             /etc/apt/sources.list.d/gierens.sources; do
             [ -f "$_stale" ] && { info "Removing stale apt source: $_stale"; sudo rm -f "$_stale"; }
         done
-        # Also remove via add-apt-repository if available (handles PPA cleanup properly)
         if has add-apt-repository; then
             sudo add-apt-repository --remove -y ppa:lazygit-team/release 2>/dev/null || true
         fi
@@ -339,6 +393,9 @@ install_deps_linux() {
     info "Ensuring git, curl, unzip..."
     pkg_install git curl unzip
     ensure_pkg tmux   tmux
+
+    # Declarative packages from packages.txt
+    install_linux_packages
 
     # Shell & prompt
     install_ohmyzsh
@@ -354,6 +411,7 @@ install_deps_linux() {
     install_zoxide_linux
     install_eza_linux
     install_lazygit_linux
+    install_nerd_font
     install_nvm
 }
 
@@ -393,10 +451,16 @@ vim.g.netrw_list_hide = ok and hide or ""|' "$netrw"
 
 create_symlinks() {
     local links=(
-        "$DOTFILES_DIR/nvim       $HOME/.config/nvim"
-        "$DOTFILES_DIR/tmux.conf  $HOME/.config/tmux/tmux.conf"
-        "$DOTFILES_DIR/zshrc      $HOME/.zshrc"
+        "$DOTFILES_DIR/nvim              $HOME/.config/nvim"
+        "$DOTFILES_DIR/tmux.conf         $HOME/.config/tmux/tmux.conf"
+        "$DOTFILES_DIR/zshrc             $HOME/.zshrc"
+        "$DOTFILES_DIR/gitignore_global  $HOME/.gitignore_global"
     )
+
+    # Karabiner is macOS-only
+    if [ "$OS" = "Darwin" ] && [ -d "$DOTFILES_DIR/karabiner" ]; then
+        links+=("$DOTFILES_DIR/karabiner/karabiner.json  $HOME/.config/karabiner/karabiner.json")
+    fi
 
     for entry in "${links[@]}"; do
         local src dest
@@ -430,6 +494,12 @@ backup_and_link() {
 # ─── Post-install ────────────────────────────────────────────────────
 
 post_install() {
+    # Point git at the global gitignore
+    if [ -f "$HOME/.gitignore_global" ]; then
+        git config --global core.excludesFile "$HOME/.gitignore_global"
+        ok "git core.excludesFile set"
+    fi
+
     local tpm="$HOME/.config/tmux/plugins/tpm/bin/install_plugins"
     if [ -x "$tpm" ]; then
         info "Installing tmux plugins..."
@@ -451,6 +521,7 @@ post_install() {
     info "Done! You may want to:"
     echo "  • Restart your shell or run:  exec zsh"
     echo "  • Open nvim to trigger lazy.nvim plugin install"
+    echo "  • Set your terminal font to JetBrainsMono Nerd Font"
     [ -d "$HOME/.dotfiles-backup" ] && { echo ""; info "Previous configs backed up to ~/.dotfiles-backup/"; }
 }
 
@@ -463,7 +534,7 @@ main() {
         info "Skipping dependency install (SKIP_DEPS is set)"
     fi
 
-    for f in nvim tmux.conf zshrc; do
+    for f in nvim tmux.conf zshrc gitignore_global; do
         [ -e "$DOTFILES_DIR/$f" ] || { err "Missing $DOTFILES_DIR/$f — is the repo cloned correctly?"; exit 1; }
     done
 
