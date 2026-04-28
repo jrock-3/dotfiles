@@ -263,13 +263,10 @@ install_eza_linux() {
             *) warn "eza: unsupported arch $arch"; false ;;
         esac
         local tmpdir; tmpdir="$(mktemp -d)"
-        local tarball="$tmpdir/eza.tar.gz"
-        curl -fsSLo "$tarball" \
+        curl -fsSLo "$tmpdir/eza.tar.gz" \
             "https://github.com/eza-community/eza/releases/latest/download/eza_${arch}-unknown-linux-gnu.tar.gz"
-        tar xzf "$tarball" -C "$tmpdir"
-        local bin; bin="$(find "$tmpdir" -name eza -type f | head -1)"
-        [ -n "$bin" ] || { warn "eza binary not found in archive"; false; }
-        sudo install "$bin" /usr/local/bin/eza
+        tar xzf "$tmpdir/eza.tar.gz" -C "$tmpdir"
+        sudo install "$tmpdir/eza" /usr/local/bin/eza
         rm -rf "$tmpdir"
     ) || warn "eza install failed — https://github.com/eza-community/eza"
     has eza && ok "eza" || true
