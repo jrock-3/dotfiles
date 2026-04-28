@@ -264,6 +264,106 @@ install_eza_linux() {
     has eza && ok "eza" || true
 }
 
+install_bat_linux() {
+    has bat && { ok "bat"; return; }
+    info "Installing bat..."
+    if pkg_install bat 2>/dev/null; then
+        # Debian/Ubuntu installs the binary as "batcat" due to naming conflict
+        if ! has bat && has batcat; then
+            mkdir -p "$HOME/.local/bin"
+            ln -sf "$(which batcat)" "$HOME/.local/bin/bat"
+        fi
+    fi
+    ( has bat || has batcat ) && ok "bat" || warn "bat install failed"
+}
+
+install_fd_linux() {
+    has fd && { ok "fd"; return; }
+    info "Installing fd..."
+    # Debian/Ubuntu: package is fd-find, binary is fdfind
+    if pkg_install fd-find 2>/dev/null; then
+        if ! has fd && has fdfind; then
+            mkdir -p "$HOME/.local/bin"
+            ln -sf "$(which fdfind)" "$HOME/.local/bin/fd"
+        fi
+        ( has fd || has fdfind ) && ok "fd" || warn "fd install failed"
+        return
+    fi
+    # Fallback: GitHub release binary
+    (
+        local arch; arch="$(uname -m)"
+        case "$arch" in
+            x86_64)  arch="x86_64" ;;
+            aarch64) arch="aarch64" ;;
+            *) warn "fd: unsupported arch $arch"; false ;;
+        esac
+        local ver
+        ver="$(curl -fsSL https://api.github.com/repos/sharkdp/fd/releases/latest \
+            | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')"
+        [ -z "$ver" ] && { warn "Could not determine latest fd version"; false; }
+        local tarball="/tmp/fd.tar.gz"
+        curl -fsSLo "$tarball" \
+            "https://github.com/sharkdp/fd/releases/download/v${ver}/fd-v${ver}-${arch}-unknown-linux-gnu.tar.gz"
+        tar xzf "$tarball" -C /tmp
+        sudo install "/tmp/fd-v${ver}-${arch}-unknown-linux-gnu/fd" /usr/local/bin/fd
+        rm -rf "/tmp/fd-v${ver}-${arch}-unknown-linux-gnu" "$tarball"
+    ) || warn "fd install failed — https://github.com/sharkdp/fd"
+    has fd && ok "fd" || true
+}
+
+install_dust_linux() {
+    has dust && { ok "dust"; return; }
+    info "Installing dust..."
+    (
+        local arch; arch="$(uname -m)"
+        case "$arch" in
+            x86_64)  arch="x86_64" ;;
+            aarch64) arch="aarch64" ;;
+            *) warn "dust: unsupported arch $arch"; false ;;
+        esac
+        local ver
+        ver="$(curl -fsSL https://api.github.com/repos/bootandy/dust/releases/latest \
+            | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')"
+        [ -z "$ver" ] && { warn "Could not determine latest dust version"; false; }
+        local tarball="/tmp/dust.tar.gz"
+        curl -fsSLo "$tarball" \
+            "https://github.com/bootandy/dust/releases/download/v${ver}/dust-v${ver}-${arch}-unknown-linux-gnu.tar.gz"
+        tar xzf "$tarball" -C /tmp
+        sudo install "/tmp/dust-v${ver}-${arch}-unknown-linux-gnu/dust" /usr/local/bin/dust
+        rm -rf "/tmp/dust-v${ver}-${arch}-unknown-linux-gnu" "$tarball"
+    ) || warn "dust install failed — https://github.com/bootandy/dust"
+    has dust && ok "dust" || true
+}
+
+install_duf_linux() {
+    has duf && { ok "duf"; return; }
+    info "Installing duf..."
+    if pkg_install duf 2>/dev/null; then
+        has duf && ok "duf" || warn "duf install failed"
+        return
+    fi
+    # Fallback: GitHub release binary
+    (
+        local arch; arch="$(uname -m)"
+        case "$arch" in
+            x86_64)  arch="amd64" ;;
+            aarch64) arch="arm64" ;;
+            *) warn "duf: unsupported arch $arch"; false ;;
+        esac
+        local ver
+        ver="$(curl -fsSL https://api.github.com/repos/muesli/duf/releases/latest \
+            | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')"
+        [ -z "$ver" ] && { warn "Could not determine latest duf version"; false; }
+        local tarball="/tmp/duf.tar.gz"
+        curl -fsSLo "$tarball" \
+            "https://github.com/muesli/duf/releases/download/v${ver}/duf_${ver}_linux_${arch}.tar.gz"
+        tar xzf "$tarball" -C /tmp duf
+        sudo install /tmp/duf /usr/local/bin/duf
+        rm -f /tmp/duf "$tarball"
+    ) || warn "duf install failed — https://github.com/muesli/duf"
+    has duf && ok "duf" || true
+}
+
 install_lazygit_linux() {
     has lazygit && { ok "lazygit"; return; }
     info "Installing lazygit..."
@@ -409,7 +509,11 @@ install_deps_linux() {
     install_tpm
     install_fzf_linux
     install_zoxide_linux
+    install_bat_linux
+    install_fd_linux
     install_eza_linux
+    install_dust_linux
+    install_duf_linux
     install_lazygit_linux
     install_nerd_font
     install_nvm

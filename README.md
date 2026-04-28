@@ -55,6 +55,7 @@ dotfiles/
 | [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | OMZ plugin | OMZ plugin | Fish-like suggestions |
 | [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) | Homebrew | apt/dnf/pacman | Command highlighting |
 | [eza](https://github.com/eza-community/eza) | Homebrew | binary | Modern `ls` |
+| [btop](https://github.com/aristocratos/btop) | Homebrew | apt/dnf/pacman | Resource monitor |
 | [lazygit](https://github.com/jesseduffield/lazygit) | Homebrew | binary | Git TUI |
 | [zoxide](https://github.com/ajeetdsouza/zoxide) | Homebrew | binary/pkg mgr | Smart `cd` |
 | [fzf](https://github.com/junegunn/fzf) | Homebrew | apt/dnf/pacman | Fuzzy finder |
@@ -165,6 +166,7 @@ This avoids conflicts when nesting tmux sessions via SSH.
 | `prefix Ctrl-f` | Switch window (fzf) |
 | `prefix Ctrl-t` | Toggle popup terminal session |
 | `prefix Ctrl-g` | Lazygit in popup |
+| `prefix Ctrl-o` | btop in popup |
 
 ### Copy mode
 

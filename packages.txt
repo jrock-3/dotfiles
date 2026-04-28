@@ -9,7 +9,6 @@ tmux
 git
 curl
 unzip
-bat
 btop
 ripgrep
 gawk
