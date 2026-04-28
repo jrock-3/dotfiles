@@ -54,13 +54,19 @@ dotfiles/
 | [Oh My Posh](https://ohmyposh.dev) | Homebrew | curl | Prompt theme engine |
 | [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | OMZ plugin | OMZ plugin | Fish-like suggestions |
 | [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) | Homebrew | apt/dnf/pacman | Command highlighting |
+| [bat](https://github.com/sharkdp/bat) | Homebrew | apt/dnf/pacman | Modern `cat` |
+| [fd](https://github.com/sharkdp/fd) | Homebrew | apt/binary | Modern `find` |
 | [eza](https://github.com/eza-community/eza) | Homebrew | binary | Modern `ls` |
+| [dust](https://github.com/bootandy/dust) | Homebrew | binary | Modern `du` |
+| [duf](https://github.com/muesli/duf) | Homebrew | apt/binary | Modern `df` |
 | [btop](https://github.com/aristocratos/btop) | Homebrew | apt/dnf/pacman | Resource monitor |
 | [lazygit](https://github.com/jesseduffield/lazygit) | Homebrew | binary | Git TUI |
 | [zoxide](https://github.com/ajeetdsouza/zoxide) | Homebrew | binary/pkg mgr | Smart `cd` |
 | [fzf](https://github.com/junegunn/fzf) | Homebrew | apt/dnf/pacman | Fuzzy finder |
 | [NVM](https://github.com/nvm-sh/nvm) + Node LTS | curl | curl | Node version manager |
 | [TPM](https://github.com/tmux-plugins/tpm) | git clone | git clone | Tmux plugin manager |
+
+> **Note:** On Debian/Ubuntu, `bat` installs as `batcat` and `fd` as `fdfind` due to naming conflicts. The installer creates symlinks in `~/.local/bin` so you can use the standard names.
 
 On macOS, [Homebrew](https://brew.sh) is installed automatically if missing.
 
