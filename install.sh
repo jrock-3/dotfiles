@@ -133,6 +133,14 @@ ensure_clone() {
     ok "$name"
 }
 
+# Get latest release version from GitHub without the API (avoids rate limits).
+# Uses the /releases/latest redirect to extract the tag.
+gh_latest_ver() {
+    local repo="$1"
+    curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$repo/releases/latest" \
+        | grep -oE '[^/]+$' | sed 's/^v//'
+}
+
 # ─── Individual installers ───────────────────────────────────────────
 # Each function is self-contained: check → install → report.
 # To add a new tool, write a function and call it from install_deps.
@@ -254,12 +262,15 @@ install_eza_linux() {
             x86_64|aarch64) ;;
             *) warn "eza: unsupported arch $arch"; false ;;
         esac
-        local tarball="/tmp/eza.tar.gz"
+        local tmpdir; tmpdir="$(mktemp -d)"
+        local tarball="$tmpdir/eza.tar.gz"
         curl -fsSLo "$tarball" \
             "https://github.com/eza-community/eza/releases/latest/download/eza_${arch}-unknown-linux-gnu.tar.gz"
-        tar xzf "$tarball" -C /tmp eza
-        sudo install /tmp/eza /usr/local/bin/eza
-        rm -f /tmp/eza "$tarball"
+        tar xzf "$tarball" -C "$tmpdir"
+        local bin; bin="$(find "$tmpdir" -name eza -type f | head -1)"
+        [ -n "$bin" ] || { warn "eza binary not found in archive"; false; }
+        sudo install "$bin" /usr/local/bin/eza
+        rm -rf "$tmpdir"
     ) || warn "eza install failed — https://github.com/eza-community/eza"
     has eza && ok "eza" || true
 }
@@ -298,8 +309,7 @@ install_fd_linux() {
             *) warn "fd: unsupported arch $arch"; false ;;
         esac
         local ver
-        ver="$(curl -fsSL https://api.github.com/repos/sharkdp/fd/releases/latest \
-            | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')"
+        ver="$(gh_latest_ver sharkdp/fd)"
         [ -z "$ver" ] && { warn "Could not determine latest fd version"; false; }
         local tarball="/tmp/fd.tar.gz"
         curl -fsSLo "$tarball" \
@@ -322,8 +332,7 @@ install_dust_linux() {
             *) warn "dust: unsupported arch $arch"; false ;;
         esac
         local ver
-        ver="$(curl -fsSL https://api.github.com/repos/bootandy/dust/releases/latest \
-            | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')"
+        ver="$(gh_latest_ver bootandy/dust)"
         [ -z "$ver" ] && { warn "Could not determine latest dust version"; false; }
         local tarball="/tmp/dust.tar.gz"
         curl -fsSLo "$tarball" \
@@ -351,8 +360,7 @@ install_duf_linux() {
             *) warn "duf: unsupported arch $arch"; false ;;
         esac
         local ver
-        ver="$(curl -fsSL https://api.github.com/repos/muesli/duf/releases/latest \
-            | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')"
+        ver="$(gh_latest_ver muesli/duf)"
         [ -z "$ver" ] && { warn "Could not determine latest duf version"; false; }
         local tarball="/tmp/duf.tar.gz"
         curl -fsSLo "$tarball" \
@@ -370,8 +378,7 @@ install_lazygit_linux() {
     (
         local ver arch="$(uname -m)"
         [ "$arch" = "aarch64" ] && arch="arm64"
-        ver="$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest \
-            | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')"
+        ver="$(gh_latest_ver jesseduffield/lazygit)"
         [ -z "$ver" ] && { warn "Could not determine latest lazygit version"; false; }
         curl -fsSLo /tmp/lazygit.tar.gz \
             "https://github.com/jesseduffield/lazygit/releases/download/v${ver}/lazygit_${ver}_Linux_${arch}.tar.gz"
