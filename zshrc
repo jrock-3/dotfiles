@@ -88,6 +88,9 @@ if command -v fzf &>/dev/null; then
       --border --height=40%"
 fi
 
+# ─── Machine-local overrides (not tracked in dotfiles) ───────────────
+[ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
+
 # ─── NVM (lazy-loaded for fast shell startup) ─────────────────────────
 export NVM_DIR="$HOME/.nvm"
 if [ -s "$NVM_DIR/nvm.sh" ]; then

@@ -369,6 +369,54 @@ install_duf_linux() {
     has duf && ok "duf" || true
 }
 
+install_eaas_cli_linux() {
+    has eaas-cli && { ok "eaas-cli"; return; }
+    info "Installing eaas-cli..."
+    (
+        local latest
+        latest="$(curl -sf \
+            "https://artifactory.rbx.com/artifactory/api/storage/generic-all/entities-as-a-service/eaas-cli/" \
+            | python3 -c "import sys,json; c=json.load(sys.stdin)['children']; v=[x['uri'].strip('/') for x in c]; v.sort(key=lambda s: list(map(int,s.split('.')))); print(v[-1])" 2>/dev/null)"
+        [ -z "$latest" ] && { warn "Could not determine latest eaas-cli version"; false; }
+        sudo curl -fsSL -o /usr/local/bin/eaas-cli \
+            "https://artifactory.rbx.com/artifactory/generic-all/entities-as-a-service/eaas-cli/${latest}/x86_64-linux/eaas-cli"
+        sudo chmod +x /usr/local/bin/eaas-cli
+    ) || warn "eaas-cli install failed — check Artifactory access"
+    has eaas-cli && ok "eaas-cli" || true
+}
+
+install_zshrc_local_linux() {
+    local zshrc_local="$HOME/.zshrc.local"
+    if grep -q "eaas-cli-update-check" "$zshrc_local" 2>/dev/null; then
+        ok "eaas-cli wrapper in ~/.zshrc.local"; return
+    fi
+    info "Adding eaas-cli daily-update wrapper to ~/.zshrc.local..."
+    cat >> "$zshrc_local" <<'EOF'
+
+# ─── eaas-cli: install-if-missing + daily auto-update ────────────────
+eaas-cli() {
+    local stamp="/tmp/.eaas-cli-update-check"
+    if [ ! -f "$stamp" ] || [ "$(date +%Y-%m-%d)" != "$(cat "$stamp" 2>/dev/null)" ]; then
+        local current latest
+        current=$(command eaas-cli --version 2>/dev/null | awk '{print $2}')
+        latest=$(curl -sf \
+            "https://artifactory.rbx.com/artifactory/api/storage/generic-all/entities-as-a-service/eaas-cli/" \
+            | python3 -c "import sys,json; c=json.load(sys.stdin)['children']; v=[x['uri'].strip('/') for x in c]; v.sort(key=lambda s: list(map(int,s.split('.')))); print(v[-1])" 2>/dev/null)
+        if [ -n "$latest" ] && [ "$current" != "$latest" ]; then
+            echo "eaas-cli: updating $current → $latest"
+            sudo curl -fsSL -o "$(command -v eaas-cli)" \
+                "https://artifactory.rbx.com/artifactory/generic-all/entities-as-a-service/eaas-cli/${latest}/x86_64-linux/eaas-cli" \
+                && sudo chmod +x "$(command -v eaas-cli)" \
+                && echo "eaas-cli: updated to $latest"
+        fi
+        date +%Y-%m-%d > "$stamp"
+    fi
+    command eaas-cli "$@"
+}
+EOF
+    ok "eaas-cli wrapper → ~/.zshrc.local"
+}
+
 install_lazygit_linux() {
     has lazygit && { ok "lazygit"; return; }
     info "Installing lazygit..."
@@ -521,6 +569,8 @@ install_deps_linux() {
     install_lazygit_linux
     install_nerd_font
     install_nvm
+    install_eaas_cli_linux
+    install_zshrc_local_linux
 }
 
 install_deps() {
