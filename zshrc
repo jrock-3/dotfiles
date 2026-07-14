@@ -86,6 +86,21 @@ if command -v fzf &>/dev/null; then
       --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
       --color=marker:#b4befe,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8 \
       --border --height=40%"
+    # C-t: full-home file search backed by a background-refreshed cache for instant startup
+    if command -v fd &>/dev/null; then
+        _fzf_cache="$HOME/.cache/fzf_home_files"
+        _fzf_refresh_home_cache() {
+            if [[ ! -f "$_fzf_cache" ]] || [[ -n "$(find "$_fzf_cache" -mmin +15 2>/dev/null)" ]]; then
+                fd --type f --hidden --follow \
+                    --exclude .git --exclude node_modules --exclude Library \
+                    --exclude .Trash --exclude .cache --exclude '.npm' \
+                    . ~ > "$_fzf_cache" 2>/dev/null &!
+            fi
+        }
+        _fzf_refresh_home_cache
+        export FZF_CTRL_T_COMMAND="cat $_fzf_cache 2>/dev/null || fd --type f --hidden --follow --exclude .git . ~"
+    fi
+    export FZF_CTRL_T_OPTS="--scheme=path --preview 'cat {}' --preview-window=right:50%:wrap"
 fi
 
 # ─── Machine-local overrides (not tracked in dotfiles) ───────────────
